@@ -34,6 +34,9 @@ Instead of guessing, our system *knows*.
 2. **👨‍🍳 Kitchen Command:** Chefs receive AI-generated prep guides based on real-time predictive modeling.
 3. **📊 Admin Analytics:** Staff view live ESG metrics, CO2 prevention, and automate NGO surplus donations.
 
+## 🎥 Demo & Presentation
+👉 [View Full Project Presentation (Canva)](https://www.canva.com/design/DAHEJEiX31w/Zy6kbvzyGxtzVowCqUv1tw/edit)
+
 ---
 
 ## 🧠 The 4-Agent AI Hive-Mind (Architecture)
