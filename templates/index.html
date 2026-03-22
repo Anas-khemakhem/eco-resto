@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Eco-Resto</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --bg: #f8fafc; --text: #1e293b; --card: rgba(255,255,255,0.8); --border: rgba(255,255,255,0.5); --glow: rgba(16, 185, 129, 0.4); }
+        [data-theme="dark"] { --bg: #0f172a; --text: #f8fafc; --card: rgba(30,41,59,0.8); --border: rgba(255,255,255,0.1); --glow: rgba(16, 185, 129, 0.2); }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg); color: var(--text); overflow-x: hidden; transition: 0.4s; }
+        
+        .glass-card { background: var(--card); backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); transition: all 0.4s ease; cursor: pointer; }
+        .glass-card:hover { transform: translateY(-10px); box-shadow: 0 20px 40px var(--glow); }
+        .text-gradient { background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .blob { position: absolute; filter: blur(80px); z-index: -1; opacity: 0.4; animation: float 8s infinite alternate; }
+        .blob-1 { top: -100px; left: -100px; width: 400px; height: 400px; background: #34d399; border-radius: 50%; }
+        .blob-2 { top: 200px; right: -150px; width: 500px; height: 500px; background: #3b82f6; border-radius: 50%; animation-delay: 2s; }
+        @keyframes float { 0% {transform: translateY(0) scale(1);} 100% {transform: translateY(40px) scale(1.1);} }
+        
+        .ticker-wrap { background: #1e293b; color: white; padding: 12px 0; overflow: hidden; font-weight: 600; }
+        .ticker { display: inline-block; white-space: nowrap; animation: ticker 25s linear infinite; }
+        @keyframes ticker { 0% { transform: translate3d(100%, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
+        
+        .pulse-btn { animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+        
+        [dir="rtl"] { text-align: right; }
+        .icon-circle { width: 80px; height: 80px; border-radius: 25px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: white; margin-bottom: 25px; transition: 0.3s; }
+        .glass-card:hover .icon-circle { transform: scale(1.1) rotate(5deg); }
+    </style>
+</head>
+<body>
+    <div class="blob blob-1"></div><div class="blob blob-2"></div>
+    <div class="ticker-wrap"><div class="ticker"><span class="mx-4"><i class="bi bi-cloud-haze2-fill text-success"></i> <span data-i18n="ticker1">380 kg Methane prevented</span></span><span class="mx-4"><i class="bi bi-arrow-down-circle text-info"></i> <span data-i18n="ticker2">30% reduction in waste today</span></span></div></div>
+
+    <nav class="navbar container py-4 d-flex justify-content-between">
+        <a class="navbar-brand fw-bold fs-3 text-success" href="#"><i class="bi bi-leaf-fill"></i> Eco-Resto</a>
+        <div class="d-flex gap-2 align-items-center">
+            <select id="langSwitch" class="form-select form-select-sm fw-bold shadow-sm" style="width: auto; border-radius: 12px;">
+                <option value="en">🇬🇧 EN</option><option value="fr">🇫🇷 FR</option><option value="ar">🇹🇳 AR</option>
+            </select>
+            <button id="themeToggle" class="btn btn-outline-secondary btn-sm rounded-circle shadow-sm" style="width: 35px; height: 35px;"><i class="bi bi-moon-stars"></i></button>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <span class="badge bg-success bg-opacity-10 text-success px-4 py-2 rounded-pill fw-bold mb-4" data-i18n="badge" style="font-size: 1rem;">SDG 13 Initiative</span>
+                <h1 class="display-3 fw-extrabold mb-4" style="font-weight: 800; line-height: 1.1;"><span data-i18n="hero1">End Food Waste with</span> <span class="text-gradient" data-i18n="hero2">Vision AI.</span></h1>
+                <p class="lead mb-5" data-i18n="desc" style="color: var(--text); opacity: 0.8;">University canteens lose massive resources. Eco-Resto uses probabilistic AI and tray-scanning cameras to cook exactly what's needed.</p>
+                <a href="#portals" class="btn btn-success btn-lg px-5 py-3 rounded-pill fw-bold pulse-btn" data-i18n="exp">Explore Portals</a>
+            </div>
+            <div class="col-lg-6">
+                <div class="glass-card p-4">
+                    <h5 class="fw-bold mb-3"><i class="bi bi-graph-up-arrow text-primary"></i> <span data-i18n="chart_title">Projected Impact</span></h5>
+                    <div style="height: 300px;"><canvas id="heroChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container py-5 mt-4" id="portals">
+        <h2 class="fw-bold text-center mb-5" data-i18n="portals">Select Your Interface</h2>
+        <div class="row g-4">
+            <div class="col-lg-4" onclick="window.location='/chef'">
+                <div class="glass-card h-100 p-5 text-center">
+                    <div class="icon-circle mx-auto shadow-lg" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><i class="bi bi-shop"></i></div>
+                    <h4 class="fw-bold" data-i18n="c">Kitchen Command</h4>
+                    <p class="mb-4 small opacity-75" data-i18n="cdesc">For Chefs. Access AI prep guides and run the webcam scanner.</p>
+                    <span class="btn btn-outline-warning w-100 mt-auto fw-bold rounded-pill border-2" data-i18n="cbtn">Open Kitchen</span>
+                </div>
+            </div>
+            <div class="col-lg-4" onclick="window.location='/admin'">
+                <div class="glass-card h-100 p-5 text-center">
+                    <div class="icon-circle mx-auto shadow-lg" style="background: linear-gradient(135deg, #3b82f6, #2563eb);"><i class="bi bi-globe-americas"></i></div>
+                    <h4 class="fw-bold" data-i18n="a">Admin Analytics</h4>
+                    <p class="mb-4 small opacity-75" data-i18n="adesc">For Staff. View SDG Impact metrics and export PDF reports.</p>
+                    <span class="btn btn-outline-primary w-100 mt-auto fw-bold rounded-pill border-2" data-i18n="abtn">Open Analytics</span>
+                </div>
+            </div>
+            <div class="col-lg-4" onclick="window.location='/student'">
+                <div class="glass-card h-100 p-5 text-center">
+                    <div class="icon-circle mx-auto shadow-lg" style="background: linear-gradient(135deg, #10b981, #059669);"><i class="bi bi-phone"></i></div>
+                    <h4 class="fw-bold" data-i18n="s">Student App</h4>
+                    <p class="mb-4 small opacity-75" data-i18n="sdesc">Secure SSO Login. RSVP for meals and check canteen status.</p>
+                    <span class="btn btn-outline-success w-100 mt-auto fw-bold rounded-pill border-2" data-i18n="sbtn">Launch App</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ctx = document.getElementById('heroChart').getContext('2d');
+        let chart = new Chart(ctx, { type: 'bar', data: { labels: ['M1', 'M2', 'M3', 'M4', 'M5', 'M6'], datasets: [{ label: 'Waste', data: [1200, 950, 700, 450, 300, 150], backgroundColor: '#10b981', borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+        
+        const trans = {
+            en: { ticker1: "380 kg Methane prevented", ticker2: "30% reduction in waste today", badge: "SDG 13 Initiative", hero1: "End Food Waste with", hero2: "Vision AI.", desc: "University canteens lose massive resources. Eco-Resto uses probabilistic AI to cook exactly what's needed.", exp: "Explore Portals", chart_title: "Projected Impact", portals: "Select Your Interface", c: "Kitchen Command", cdesc: "For Chefs. Access AI prep guides and run the webcam scanner.", cbtn: "Open Kitchen", a: "Admin Analytics", adesc: "For Staff. View SDG Impact metrics and export reports.", abtn: "Open Analytics", s: "Student App", sdesc: "Secure SSO Login. RSVP for meals and check canteen status.", sbtn: "Launch App", m1: "M1", m2: "M2", m3: "M3", m4: "M4", m5: "M5", m6: "M6" },
+            fr: { ticker1: "380 kg de Méthane évités", ticker2: "Réduction de 30% des déchets", badge: "Initiative ODD 13", hero1: "Finir le Gaspillage avec", hero2: "l'IA Visuelle.", desc: "Les cantines perdent des ressources. L'IA cuisine exactement ce qu'il faut.", exp: "Explorer", chart_title: "Impact Projeté", portals: "Sélectionnez l'Interface", c: "Centre de Cuisine", cdesc: "Pour les Chefs. Guides IA et scanner webcam.", cbtn: "Ouvrir Cuisine", a: "Analytique Admin", adesc: "Pour le personnel. Voir l'impact et exporter PDF.", abtn: "Ouvrir Analytique", s: "App Étudiant", sdesc: "Connexion SSO. Réserver repas et vérifier statut.", sbtn: "Lancer l'App", m1: "M1", m2: "M2", m3: "M3", m4: "M4", m5: "M5", m6: "M6" },
+            ar: { ticker1: "منع 380 كجم من الميثان", ticker2: "انخفاض النفايات بنسبة 30٪", badge: "مبادرة التنمية 13", hero1: "أوقف هدر الطعام مع", hero2: "الذكاء الاصطناعي.", desc: "المطاعم الجامعية تفقد الموارد. نستخدم الذكاء الاصطناعي لطبخ ما يلزم بالضبط.", exp: "استكشف البوابات", chart_title: "التأثير المتوقع", portals: "اختر واجهتك", c: "قيادة المطبخ", cdesc: "للطهاة. أدلة الذكاء الاصطناعي وماسح الكاميرا.", cbtn: "فتح المطبخ", a: "لوحة الإدارة", adesc: "للموظفين. عرض التأثير وتصدير التقارير.", abtn: "فتح التحليلات", s: "تطبيق الطالب", sdesc: "دخول آمن. تأكيد الحضور وحالة المطعم.", sbtn: "بدء التطبيق", m1: "ش1", m2: "ش2", m3: "ش3", m4: "ش4", m5: "ش5", m6: "ش6" }
+        };
+
+        const themeBtn = document.getElementById('themeToggle');
+        if(localStorage.getItem('theme') === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); themeBtn.innerHTML = '<i class="bi bi-sun"></i>'; }
+        themeBtn.addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+            themeBtn.innerHTML = isDark ? '<i class="bi bi-moon-stars"></i>' : '<i class="bi bi-sun"></i>';
+        });
+
+        const langSelect = document.getElementById('langSwitch');
+        if(localStorage.getItem('lang')) { langSelect.value = localStorage.getItem('lang'); }
+        applyLang(langSelect.value);
+
+        langSelect.addEventListener('change', (e) => { localStorage.setItem('lang', e.target.value); applyLang(e.target.value); });
+
+        function applyLang(l) {
+            document.documentElement.setAttribute('dir', l==='ar'?'rtl':'ltr');
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                if(trans[l][el.getAttribute('data-i18n')]) el.innerHTML = trans[l][el.getAttribute('data-i18n')];
+            });
+            chart.data.labels = [trans[l].m1, trans[l].m2, trans[l].m3, trans[l].m4, trans[l].m5, trans[l].m6];
+            chart.update();
+        }
+    </script>
+</body>
+</html>

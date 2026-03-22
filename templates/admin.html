@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Eco-Analytics</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --bg: #f1f5f9; --text: #1e293b; --card: #ffffff; --border: #e2e8f0; --shadow: rgba(0,0,0,0.03); }
+        [data-theme="dark"] { --bg: #0f172a; --text: #f8fafc; --card: #1e293b; --border: #334155; --shadow: rgba(0,0,0,0.4); }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg); color: var(--text); padding-bottom: 40px; transition: 0.3s;}
+        .glass-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 10px 30px var(--shadow); padding: 25px; transition: 0.3s;}
+        .glass-card:hover { transform: translateY(-5px); }
+        [dir="rtl"] { text-align: right; }
+        @media print { body { background: white; color: black; } .no-print { display: none !important; } .glass-card { box-shadow: none; border: 1px solid #ccc; transform: none !important; } }
+    </style>
+</head>
+<body>
+    <div class="glass-card mb-4 py-3 no-print rounded-0 border-0 shadow-sm" style="border-radius: 0 0 25px 25px !important;">
+        <div class="container d-flex justify-content-between align-items-center">
+            <h3 class="mb-0 fw-bold text-primary"><i class="bi bi-globe-americas"></i> <span data-i18n="title">Impact Hub</span></h3>
+            <div class="d-flex gap-2">
+                <select id="langSwitch" class="form-select form-select-sm fw-bold border-0 bg-light" style="width: auto; border-radius:10px;"><option value="en">EN</option><option value="fr">FR</option><option value="ar">AR</option></select>
+                <button id="themeToggle" class="btn btn-outline-secondary btn-sm rounded-circle"><i class="bi bi-moon-stars"></i></button>
+                <button onclick="window.print()" class="btn btn-primary btn-sm rounded-pill fw-bold px-3 shadow-sm"><i class="bi bi-printer"></i> <span data-i18n="export">Export</span></button>
+                <a href="/" class="btn btn-dark btn-sm rounded-pill px-4 shadow-sm" data-i18n="home">Home</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row g-4 mb-4">
+            <div class="col-lg-6"><div class="glass-card h-100"><h5 class="fw-bold mb-3 text-success"><i class="bi bi-graph-down"></i> <span data-i18n="c1">Organic Waste Trend (kg)</span></h5><div style="height: 250px;"><canvas id="lineChart"></canvas></div></div></div>
+            <div class="col-lg-3"><div class="glass-card h-100"><h5 class="fw-bold mb-3 text-warning"><i class="bi bi-pie-chart-fill"></i> <span data-i18n="c2">Waste Category</span></h5><div style="height: 250px;"><canvas id="doughnutChart"></canvas></div></div></div>
+            <div class="col-lg-3"><div class="glass-card h-100"><h5 class="fw-bold mb-3 text-primary"><i class="bi bi-cloud-haze2"></i> <span data-i18n="c3">Methane Prevented</span></h5><div style="height: 250px;"><canvas id="barChart"></canvas></div></div></div>
+        </div>
+
+        <div class="row g-4 no-print">
+            <div class="col-lg-6">
+                <div class="glass-card h-100">
+                    <div class="row">
+                        <div class="col-md-6 border-end pe-4">
+                            <h4 class="fw-bold mb-3"><i class="bi bi-file-earmark-arrow-up text-primary"></i> <span data-i18n="sync">Upload Timetables</span></h4>
+                            <p class="small text-muted mb-2" data-i18n="sync_desc">Upload PDF/Excel of class schedules. AI will extract exam dates.</p>
+                            <form method="POST" enctype="multipart/form-data">
+                                <input type="file" name="timetable_file" class="form-control mb-3" accept=".pdf,.csv,.xlsx,.xls" required style="border-radius: 12px; font-size: 0.85rem;">
+                                <button type="submit" class="btn btn-primary w-100 fw-bold py-2 rounded-pill shadow-sm"><i class="bi bi-cloud-upload"></i> <span data-i18n="sbtn">Upload & Parse</span></button>
+                            </form>
+                            {% if file_message %}
+                                <div class="text-success text-center mt-2 fw-bold small"><i class="bi bi-check-circle-fill"></i> <span data-i18n="file_uploaded">AI Parsed Timetable!</span></div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6 ps-4">
+                            <h4 class="fw-bold mb-3 text-info"><i class="bi bi-phone-vibrate"></i> <span data-i18n="eng">Engagement</span></h4>
+                            <div class="p-4 bg-info bg-opacity-10 rounded-4 mb-3 text-center border border-info">
+                                <h1 class="display-4 fw-extrabold text-info mb-0">{{ rsvp_count }}</h1><span class="text-muted fw-bold" data-i18n="rsvp_today">RSVPs Today</span>
+                            </div>
+                            <form method="POST"><button type="submit" name="send_email" value="1" class="btn btn-info text-white w-100 fw-bold py-2 rounded-pill shadow-sm"><i class="bi bi-envelope"></i> <span data-i18n="email">Mass Email</span></button></form>
+                            {% if email_message %}<div class="text-success text-center mt-2 fw-bold small" data-i18n="email_sent">Email Sent!</div>{% endif %}
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-light rounded-3 border">
+                        <h6 class="fw-bold text-dark mb-1"><i class="bi bi-lightbulb text-warning"></i> <span data-i18n="insight">AI Insight</span></h6>
+                        <p class="mb-0 text-muted small fw-bold" data-i18n="{{ ai_insight }}"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="glass-card bg-danger text-white border-0 h-100" style="background: linear-gradient(135deg, #ef4444, #b91c1c);">
+                    <h3 class="fw-extrabold mb-3"><i class="bi bi-box2-heart-fill"></i> <span data-i18n="ngo">Automated Surplus</span></h3>
+                    <p class="opacity-75 fs-5 mb-5" data-i18n="ngod">AI detects high risk of untouched food today. Automatically alert the Food Bank to collect surplus.</p>
+                    <form method="POST"><button type="submit" name="ngo_alert" value="true" class="btn btn-light text-danger w-100 fw-bold py-3 rounded-pill fs-5 shadow-lg"><i class="bi bi-send-fill"></i> <span data-i18n="ngob">Dispatch Food Bank</span></button></form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const c1 = new Chart(document.getElementById('lineChart').getContext('2d'), { type: 'line', data: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], datasets: [{ label: 'Waste', data: [45, 42, 38, 30, 22, 15], borderColor: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', borderWidth: 4, fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+        const c2 = new Chart(document.getElementById('doughnutChart').getContext('2d'), { type: 'doughnut', data: { labels: ['Mains', 'Sides', 'Desserts'], datasets: [{ data: [30, 25, 45], backgroundColor: ['#3b82f6', '#f59e0b', '#ef4444'], borderWidth: 0 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom'} }, cutout: '75%' } });
+        const c3 = new Chart(document.getElementById('barChart').getContext('2d'), { type: 'bar', data: { labels: ['W1', 'W2', 'W3', 'W4'], datasets: [{ label: 'CO2e', data: [50, 85, 120, 160], backgroundColor: '#3b82f6', borderRadius: 8 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+
+        const trans = {
+            en: { title: "Impact Hub", export: "Export", home: "Home", c1: "Organic Waste Trend (kg)", c2: "Waste Category", c3: "Methane Prevented", sync: "Upload Timetables", sync_desc: "Upload PDF/Excel of class schedules. AI will extract exam dates.", sbtn: "Upload & Parse", file_uploaded: "Timetables processed & AI updated!", eng: "Engagement", rsvp_today: "RSVPs Today", email: "Mass Email Reminder", email_sent: "Email Sent successfully!", insight: "AI Insight", insight_normal: "Standard operations. No major events detected.", insight_exam: "Exam Period Active. AI Suggestion: Cut perishable bulk orders by 15%.", ngo: "Automated Surplus", ngod: "AI detects high risk of untouched food today. Automatically alert the Food Bank to collect surplus.", ngob: "Dispatch Food Bank", w1: "W1", w2:"W2", w3:"W3", w4:"W4", m:"Mon", tu:"Tue", we:"Wed", th:"Thu", f:"Fri", sa:"Sat", cat1:"Mains", cat2:"Sides", cat3:"Desserts" },
+            fr: { title: "Centre d'Impact", export: "Exporter", home: "Accueil", c1: "Tendance Déchets (kg)", c2: "Catégories", c3: "Méthane Évité", sync: "Uploader Emplois du Temps", sync_desc: "Uploadez PDF/Excel. L'IA extraira les dates d'examen.", sbtn: "Uploader & Analyser", file_uploaded: "Fichiers traités par l'IA !", eng: "Engagement", rsvp_today: "Réservations", email: "Rappel par Email", email_sent: "Email envoyé!", insight: "Aperçu IA", insight_normal: "Opérations standards.", insight_exam: "Période d'examens. Réduire les commandes de 15%.", ngo: "Surplus Automatisé", ngod: "Risque élevé de restes. Alerter la Banque Alimentaire.", ngob: "Appeler Banque", w1: "S1", w2:"S2", w3:"S3", w4:"S4", m:"Lun", tu:"Mar", we:"Mer", th:"Jeu", f:"Ven", sa:"Sam", cat1:"Plats", cat2:"Accomp", cat3:"Desserts" },
+            ar: { title: "مركز التأثير", export: "تصدير", home: "الرئيسية", c1: "اتجاه النفايات (كجم)", c2: "فئات النفايات", c3: "الميثان الممنوع", sync: "رفع الجداول الزمنية", sync_desc: "ارفع جداول PDF/Excel. سيستخرج الذكاء الاصطناعي أوقات الامتحانات.", sbtn: "رفع وتحليل", file_uploaded: "تمت معالجة الجداول بواسطة الذكاء الاصطناعي!", eng: "تفاعل التطبيق", rsvp_today: "حجوزات اليوم", email: "تذكير بالبريد", email_sent: "تم الإرسال!", insight: "رؤية الذكاء الاصطناعي", insight_normal: "عمليات عادية.", insight_exam: "فترة امتحانات. خفض الطلبات بنسبة 15%.", ngo: "توجيه الفائض", ngod: "خطر مرتفع لبقايا الطعام. تنبيه بنك الطعام للتبرع.", ngob: "إرسال لبنك الطعام", w1: "أ1", w2:"أ2", w3:"أ3", w4:"أ4", m:"إثن", tu:"ثلا", we:"أرب", th:"خمي", f:"جمع", sa:"سبت", cat1:"رئيسي", cat2:"جانبي", cat3:"حلويات" }
+        };
+
+        const themeBtn = document.getElementById('themeToggle');
+        if(localStorage.getItem('theme') === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); themeBtn.innerHTML = '<i class="bi bi-sun"></i>'; }
+        themeBtn.addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+            themeBtn.innerHTML = isDark ? '<i class="bi bi-moon-stars"></i>' : '<i class="bi bi-sun"></i>';
+        });
+
+        const langSelect = document.getElementById('langSwitch');
+        if(localStorage.getItem('lang')) { langSelect.value = localStorage.getItem('lang'); }
+        applyLang(langSelect.value);
+
+        langSelect.addEventListener('change', (e) => { localStorage.setItem('lang', e.target.value); applyLang(e.target.value); });
+
+        function applyLang(l) {
+            document.documentElement.setAttribute('dir', l==='ar'?'rtl':'ltr');
+            document.querySelectorAll('[data-i18n]').forEach(el => { if(trans[l][el.getAttribute('data-i18n')]) el.innerHTML = trans[l][el.getAttribute('data-i18n')]; });
+            c1.data.labels = [trans[l].m, trans[l].tu, trans[l].we, trans[l].th, trans[l].f, trans[l].sa]; c1.update();
+            c2.data.labels = [trans[l].cat1, trans[l].cat2, trans[l].cat3]; c2.update();
+            c3.data.labels = [trans[l].w1, trans[l].w2, trans[l].w3, trans[l].w4]; c3.update();
+        }
+    </script>
+</body>
+</html>

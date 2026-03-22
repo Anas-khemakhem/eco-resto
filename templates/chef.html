@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Kitchen AI Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #e2e8f0; --card: #ffffff; --text: #1e293b; --border: #e2e8f0; --shadow: rgba(0,0,0,0.05); }
+        [data-theme="dark"] { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; --border: #334155; --shadow: rgba(0,0,0,0.5); }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 40px; transition: 0.3s;}
+        .glass-card { background: var(--card); border-radius: 24px; box-shadow: 0 10px 30px var(--shadow); border: 1px solid var(--border); padding: 30px; transition: 0.3s;}
+        .glass-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px var(--shadow); }
+        .form-select { border-radius: 12px; padding: 15px; background-color: var(--bg); color: var(--text); border: 1px solid var(--border); font-weight: 600;}
+        .ai-warning { background: rgba(239, 68, 68, 0.1); border-left: 5px solid #ef4444; color: #ef4444; }
+        .shopping-list li { border-bottom: 1px dashed var(--border); padding: 12px 0; display: flex; justify-content: space-between; font-weight: 600; font-size: 1.1rem;}
+        
+        /* FUTURISTIC CAMERA UI */
+        .camera-container { position: relative; border-radius: 15px; overflow: hidden; background: #000; border: 2px solid var(--border); box-shadow: 0 10px 30px rgba(0,0,0,0.5);}
+        #webcam { object-fit: cover; width: 100%; height: 350px; display: block; }
+        #hudCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        #snapCanvas { display: none; }
+        
+        [dir="rtl"] { text-align: right; }
+        .portion-box { background: rgba(59, 130, 246, 0.1); border: 2px solid #3b82f6; color: #3b82f6; border-radius: 16px; padding: 15px; text-align: center; flex: 1 1 45%; transition: 0.2s; }
+        .portion-box:hover { background: #3b82f6; color: white; transform: scale(1.05); }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4 glass-card py-3 rounded-pill">
+            <h4 class="mb-0 fw-extrabold text-primary"><i class="bi bi-fire text-warning"></i> <span data-i18n="title">Kitchen Command</span></h4>
+            <div class="d-flex gap-3 align-items-center">
+                <select id="langSwitch" class="form-select form-select-sm fw-bold w-auto border-0 bg-light text-dark rounded-pill px-3"><option value="en">🇬🇧 EN</option><option value="fr">🇫🇷 FR</option><option value="ar">🇹🇳 AR</option></select>
+                <button id="themeToggle" class="btn btn-outline-secondary rounded-circle"><i class="bi bi-moon-stars"></i></button>
+                <form method="POST" class="m-0">
+                    {% if food_status == 'available' %}
+                        <button type="submit" name="toggle_status" value="1" class="btn btn-danger fw-bold rounded-pill shadow-sm"><i class="bi bi-stop-circle"></i> <span data-i18n="end">Mark Sold Out</span></button>
+                    {% else %}
+                        <button type="submit" name="toggle_status" value="1" class="btn btn-success fw-bold rounded-pill shadow-sm"><i class="bi bi-play-circle"></i> <span data-i18n="resume">Resume Service</span></button>
+                    {% endif %}
+                </form>
+                <a href="/" class="btn btn-dark rounded-pill px-4" data-i18n="exit">Exit</a>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-5">
+                {% if menu %}
+                <div class="glass-card mb-4" style="border-left: 6px solid #10b981;">
+                    <h6 class="fw-bold text-success mb-3"><i class="bi bi-broadcast pulse-btn"></i> <span data-i18n="live">Live on Student App</span></h6>
+                    <div class="d-flex flex-wrap gap-2 text-capitalize fw-bold">
+                        <span class="badge bg-success px-3 py-2 fs-6" data-i18n="{{ menu[2] }}">{{ menu[2] }}</span> {% if menu[3] != 'none' %}<span class="badge bg-danger px-3 py-2 fs-6" data-i18n="{{ menu[3] }}">{{ menu[3] }}</span>{% endif %} {% if menu[4] != 'none' %}<span class="badge bg-warning text-dark px-3 py-2 fs-6" data-i18n="{{ menu[4] }}">{{ menu[4] }}</span>{% endif %} </div>
+                </div>
+                {% endif %}
+
+                <div class="glass-card h-100">
+                    <h4 class="fw-bold mb-4 text-primary"><i class="bi bi-card-list"></i> <span data-i18n="compose">Compose Menu</span></h4>
+                    <form method="POST">
+                        <select name="main_dish" class="form-select mb-3" required>
+                            <option value="" disabled selected data-i18n="main">Main Base...</option>
+                            <option value="couscous" data-i18n="couscous">Couscous</option>
+                            <option value="spaghetti" data-i18n="spaghetti">Spaghetti</option>
+                            <option value="rice" data-i18n="rice">Rice</option>
+                            <option value="mra9" data-i18n="mra9">Mra9</option>
+                        </select>
+                        <select name="protein" class="form-select mb-3" required>
+                            <option value="" disabled selected data-i18n="prot">Protein...</option>
+                            <option value="meat" data-i18n="meat">Meat</option>
+                            <option value="escalope" data-i18n="escalope">Escalope</option>
+                            <option value="fish" data-i18n="fish">Fish</option>
+                            <option value="none" data-i18n="none">None</option>
+                        </select>
+                        <select name="side_dish" class="form-select mb-3" required>
+                            <option value="" disabled selected data-i18n="side">Side Dish...</option>
+                            <option value="salad" data-i18n="salad">Salad</option>
+                            <option value="rice salad" data-i18n="rice salad">Rice Salad</option>
+                            <option value="fenouil" data-i18n="fenouil">Fenouil</option>
+                            <option value="Mashed_Carrot_Salad" data-i18n="Mashed_Carrot_Salad">Mashed Carrot Salad</option>
+                            <option value="none" data-i18n="none">None</option>
+                        </select>
+                        <div class="d-flex gap-2 mb-4">
+                            <select name="fruit" class="form-select w-50" required>
+                                <option value="none" data-i18n="none">No Fruit</option>
+                                <option value="apple" data-i18n="apple">Apple</option>
+                                <option value="orange" data-i18n="orange">Orange</option>
+                                <option value="banana" data-i18n="banana">Banana</option>
+                            </select>
+                            <select name="yogurt" class="form-select w-50" required>
+                                <option value="none" data-i18n="none">No Yogurt</option>
+                                <option value="delice" data-i18n="delice">Delice</option>
+                                <option value="danone" data-i18n="danone">Danone</option>
+                                <option value="yup" data-i18n="yup">Yup</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 fw-bold py-3 fs-5 rounded-4 shadow"><i class="bi bi-cpu"></i> <span data-i18n="btngen">Generate AI Prep Guide</span></button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-7">
+                <div class="glass-card h-100">
+                    <div class="row mb-4">
+                        <div class="col-md-5 text-center mb-4 mb-md-0">
+                            <h6 class="text-muted fw-bold text-uppercase"><i class="bi bi-people-fill text-success"></i> <span data-i18n="target">Target Students</span></h6>
+                            <h1 class="display-1 fw-extrabold text-success mb-0" style="text-shadow: 0 5px 15px rgba(16,185,129,0.3);">{{ predicted }}</h1>
+                            <span class="badge bg-success bg-opacity-25 text-success rounded-pill px-3 mt-2 fs-6" data-i18n="forecast">AI Forecast</span>
+                            
+                            {% if context %}
+                                <div class="mt-3 p-2 bg-light border rounded small fw-bold text-muted">{{ context }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-7">
+                            <h5 class="fw-bold text-primary mb-3"><i class="bi bi-ui-checks"></i> <span data-i18n="portions">Exact Plates Needed</span></h5>
+                            <div class="d-flex flex-wrap gap-2 mb-4">
+                                {% if portions %}
+                                    {% for item, amount in portions.items() %}
+                                    <div class="portion-box shadow-sm">
+                                        <h3 class="fw-extrabold mb-0">{{ amount }}</h3>
+                                        <small class="fw-bold text-uppercase" data-i18n="{{ item | lower }}">{{ item }}</small>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <p class="text-muted small w-100" data-i18n="pwait">Submit menu to calculate plating math.</p>
+                                {% endif %}
+                            </div>
+
+                            <h5 class="fw-bold text-warning mb-3"><i class="bi bi-cart-check"></i> <span data-i18n="math">Bulk Ingredients</span></h5>
+                            <ul class="list-unstyled shopping-list text-muted">
+                                {% if ingredients %}
+                                    <li><span data-i18n="base_kg">Base (kg)</span> <span class="fw-bold text-success fs-5">{{ ingredients.base_kg }}</span></li>
+                                    {% if 'prot_kg' in ingredients %}<li><span data-i18n="prot_kg">Protein (kg)</span> <span class="fw-bold text-danger fs-5">{{ ingredients.prot_kg }}</span></li>{% endif %}
+                                    {% if 'veg_kg' in ingredients %}<li><span data-i18n="veg_kg">Veggies (kg)</span> <span class="fw-bold text-warning fs-5">{{ ingredients.veg_kg }}</span></li>{% endif %}
+                                {% else %}
+                                    <li data-i18n="wait">Waiting for menu input...</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12">
+                <div class="glass-card bg-dark text-white border-0">
+                    <div class="row align-items-center">
+                        <div class="col-md-5 mb-3 mb-md-0">
+                            <h3 class="fw-bold text-warning"><i class="bi bi-cpu"></i> <span data-i18n="cam">Multi-Agent Edge Vision</span></h3>
+                            <p class="opacity-75 mb-4" data-i18n="camdesc">100% Local YOLOv8 Instance Segmentation & Menu-Aware Heuristics.</p>
+                            <button id="scanBtn" class="btn btn-warning w-100 fw-bold py-3 fs-5 rounded-pill shadow"><i class="bi bi-bullseye"></i> <span data-i18n="scan">Initialize Scan</span></button>
+                            
+                            <div id="aiResult" class="alert mt-3 border-0 rounded-3 text-start bg-success text-white shadow-lg" style="display:none;"></div>
+                        </div>
+                        <div class="col-md-7">
+                            <div class="camera-container">
+                                <video id="webcam" autoplay playsinline></video>
+                                <canvas id="hudCanvas"></canvas>
+                                <canvas id="snapCanvas"></canvas> 
+                            </div>
+                            <p class="text-center small opacity-50 mt-2" id="cameraStatus"><i class="bi bi-info-circle"></i> Camera active. Ready for segmentation.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const trans = {
+            en: { 
+                title: "Kitchen Command", end: "Mark Sold Out", resume: "Resume Service", exit: "Exit", 
+                live: "Live on Student App", compose: "Compose Menu", main: "Main Base...", prot: "Protein...", 
+                side: "Side Dish...", none: "None", couscous: "Couscous", Mashed_Carrot_Salad: "Mashed Carrot Salad", 
+                spaghetti: "Spaghetti", rice: "Rice", mra9: "Mra9", meat: "Meat", escalope: "Escalope", 
+                fish: "Fish", salad: "Salad", "rice salad": "Rice Salad", fenouil: "Fenouil", 
+                apple: "Apple", orange: "Orange", banana: "Banana", delice: "Delice", danone: "Danone", yup: "Yup", 
+                btngen: "Generate AI Prep Guide", target: "Target Students", forecast: "AI Forecast", 
+                portions: "Exact Plates Needed", pwait: "Submit menu to calculate plating math.", 
+                math: "Bulk Ingredients", wait: "Waiting for menu input...", base_kg: "Base (kg)", 
+                prot_kg: "Protein (kg)", veg_kg: "Veggies (kg)", 
+                cam: "Multi-Agent Edge Vision", camdesc: "100% Local YOLOv8 Instance Segmentation & Menu-Aware Heuristics.", scan: "Initialize Scan" 
+            },
+            fr: { 
+                title: "Centre de Cuisine", end: "Marquer Épuisé", resume: "Reprendre Service", exit: "Quitter", 
+                live: "En Ligne", compose: "Composer Menu", main: "Base...", prot: "Protéine...", 
+                side: "Accompagnement...", none: "Aucun", couscous: "Couscous", Mashed_Carrot_Salad: "Purée de carottes épicée", 
+                spaghetti: "Spaghetti", rice: "Riz", mra9: "Mra9", meat: "Viande", escalope: "Escalope", 
+                fish: "Poisson", salad: "Salade", "rice salad": "Salade de Riz", fenouil: "Fenouil", 
+                apple: "Pomme", orange: "Orange", banana: "Banane", delice: "Délice", danone: "Danone", yup: "Yup", 
+                btngen: "Générer Guide IA", target: "Étudiants Ciblés", forecast: "Prévision IA", 
+                portions: "Assiettes Exactes", pwait: "Soumettre menu pour le calcul.", 
+                math: "Ingrédients en Vrac", wait: "En attente...", base_kg: "Base (kg)", 
+                prot_kg: "Protéine (kg)", veg_kg: "Légumes (kg)",
+                cam: "Vision Multi-Agents Edge", camdesc: "Segmentation YOLOv8 Locale & Heuristiques de Menu.", scan: "Lancer l'Analyse" 
+            },
+            ar: { 
+                title: "مركز قيادة المطبخ", end: "تحديد كنفاد", resume: "استئناف الخدمة", exit: "خروج", 
+                live: "مباشر للطلاب", compose: "إعداد القائمة", main: "الطبق الرئيسي...", prot: "بروتين...", 
+                side: "طبق جانبي...", none: "لا شيء", couscous: "كسكسي", Mashed_Carrot_Salad: "ترشي", 
+                spaghetti: "سباغيتي", rice: "أرز", mra9: "مرق", meat: "لحم", escalope: "إسكالوب", 
+                fish: "سمك", salad: "سلطة", "rice salad": "سلطة أرز", fenouil: "بسباس", 
+                apple: "تفاح", orange: "برتقال", banana: "موز", delice: "ديليس", danone: "دانون", yup: "يوب", 
+                btngen: "توليد دليل الذكاء", target: "الطلاب المستهدفين", forecast: "توقع الذكاء الاصطناعي", 
+                portions: "الأطباق المطلوبة", pwait: "أرسل القائمة للحساب.", 
+                math: "المكونات المطلوبة", wait: "في انتظار القائمة...", base_kg: "الأساس (كجم)", 
+                prot_kg: "بروتين (كجم)", veg_kg: "خضار (كجم)",
+                cam: "رؤية الذكاء المتعدد", camdesc: "تجزئة YOLOv8 وتحليل القائمة محلياً.", scan: "بدء المسح" 
+            }
+        };
+
+        // Theme and Language Setup
+        const themeBtn = document.getElementById('themeToggle');
+        if(localStorage.getItem('theme') === 'dark') { 
+            document.documentElement.setAttribute('data-theme', 'dark'); 
+            themeBtn.innerHTML = '<i class="bi bi-sun"></i>'; 
+        }
+        themeBtn.addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+            themeBtn.innerHTML = isDark ? '<i class="bi bi-moon-stars"></i>' : '<i class="bi bi-sun"></i>';
+        });
+
+        const langSelect = document.getElementById('langSwitch');
+        if(localStorage.getItem('lang')) { langSelect.value = localStorage.getItem('lang'); }
+        applyLang(langSelect.value);
+        langSelect.addEventListener('change', (e) => { 
+            localStorage.setItem('lang', e.target.value); 
+            applyLang(e.target.value); 
+        });
+
+        function applyLang(l) {
+            document.documentElement.setAttribute('dir', l === 'ar' ? 'rtl' : 'ltr');
+            document.querySelectorAll('[data-i18n]').forEach(el => { 
+                const key = el.getAttribute('data-i18n').toLowerCase(); 
+                let textValue = trans[l][el.getAttribute('data-i18n')]; 
+                if (!textValue) {
+                    for (const [k, v] of Object.entries(trans[l])) {
+                        if (k.toLowerCase() === key) textValue = v;
+                    }
+                }
+                if(textValue) el.innerHTML = textValue; 
+            });
+        }
+
+        // --- CYBERNETIC CAMERA & HUD SYSTEM ---
+        const video = document.getElementById('webcam');
+        const snapCanvas = document.getElementById('snapCanvas');
+        const hudCanvas = document.getElementById('hudCanvas');
+        const ctx = hudCanvas.getContext('2d');
+        const scanBtn = document.getElementById('scanBtn');
+        const aiResult = document.getElementById('aiResult');
+        let scanAnimationId = null;
+
+        // Start Webcam
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) { 
+            navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 720 } } })
+            .then(s => { video.srcObject = s; })
+            .catch(e => { console.error("Webcam blocked", e); }); 
+        }
+        
+        // Sync Canvas size to Video
+        video.addEventListener('loadedmetadata', () => {
+            hudCanvas.width = video.clientWidth;
+            hudCanvas.height = video.clientHeight;
+        });
+
+        function startCyberScanAnim() {
+            let scanY = 0;
+            let shrink = hudCanvas.width / 2;
+            
+            function animate() {
+                ctx.clearRect(0, 0, hudCanvas.width, hudCanvas.height);
+                
+                // Draw Scanning Laser
+                ctx.fillStyle = "rgba(34, 197, 94, 0.4)";
+                ctx.fillRect(0, scanY, hudCanvas.width, 4);
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = "#22c55e";
+                
+                scanY += 8;
+                if(scanY > hudCanvas.height) scanY = 0;
+
+                // Draw Searching Brackets
+                ctx.strokeStyle = "#22c55e";
+                ctx.lineWidth = 3;
+                let pad = shrink > 50 ? shrink : 50;
+                shrink -= 15; // Move inward
+                if(shrink < 50) shrink = hudCanvas.width / 2;
+
+                const w = hudCanvas.width, h = hudCanvas.height;
+                const len = 30;
+                ctx.beginPath();
+                // TL
+                ctx.moveTo(pad, pad + len); ctx.lineTo(pad, pad); ctx.lineTo(pad + len, pad);
+                // TR
+                ctx.moveTo(w - pad - len, pad); ctx.lineTo(w - pad, pad); ctx.lineTo(w - pad, pad + len);
+                // BL
+                ctx.moveTo(pad, h - pad - len); ctx.lineTo(pad, h - pad); ctx.lineTo(pad + len, h - pad);
+                // BR
+                ctx.moveTo(w - pad - len, h - pad); ctx.lineTo(w - pad, h - pad); ctx.lineTo(w - pad, h - pad - len);
+                ctx.stroke();
+
+                ctx.shadowBlur = 0;
+                scanAnimationId = requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        function lockPlateBox() {
+            cancelAnimationFrame(scanAnimationId);
+            ctx.clearRect(0, 0, hudCanvas.width, hudCanvas.height);
+            
+            // Draw a solid locking box in the center representing the plate limit
+            const w = hudCanvas.width, h = hudCanvas.height;
+            const padX = w * 0.25;
+            const padY = h * 0.15;
+            
+            ctx.strokeStyle = "#22c55e"; // Green
+            ctx.lineWidth = 4;
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = "#22c55e";
+            ctx.strokeRect(padX, padY, w - (padX*2), h - (padY*2));
+            
+            // Text overlay
+            ctx.font = "bold 20px Courier New";
+            ctx.fillStyle = "#22c55e";
+            ctx.fillText("PLATE LOCKED", padX + 5, padY - 10);
+            ctx.shadowBlur = 0;
+            
+            // Clear HUD after 4 seconds
+            setTimeout(() => { ctx.clearRect(0, 0, w, h); }, 4000);
+        }
+
+        // Trigger the AI API Request
+        scanBtn.addEventListener('click', async function() {
+            if(!video.srcObject) { alert("Camera not found."); return; }
+
+            // Start cool UI animation
+            aiResult.style.display = 'none';
+            this.classList.replace('btn-warning', 'btn-secondary');
+            this.innerHTML = '<i class="bi bi-hourglass-split"></i> AI Agents Processing...';
+            startCyberScanAnim();
+
+            // Capture Frame
+            snapCanvas.width = video.videoWidth;
+            snapCanvas.height = video.videoHeight;
+            snapCanvas.getContext('2d').drawImage(video, 0, 0);
+            const base64Image = snapCanvas.toDataURL('image/jpeg');
+
+            try {
+                // Send to local Python Server
+                const response = await fetch('/api/scan_tray', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: base64Image })
+                });
+                
+                const data = await response.json();
+
+                // Stop animation, lock the box
+                lockPlateBox();
+                
+                // Reset Button
+                this.classList.replace('btn-secondary', 'btn-warning');
+                this.innerHTML = '<i class="bi bi-bullseye"></i> Scan Next Tray';
+                aiResult.style.display = 'block';
+                if(data.status === 'success') {
+                    let bgClass = data.detected_item.includes("Contamination") ? "bg-danger" : "bg-success";
+                    
+                    aiResult.className = `alert mt-3 border-0 rounded-3 text-start text-white shadow-lg ${bgClass}`;
+                    
+                    aiResult.innerHTML = `
+                        <h5 class="fw-bold mb-2"><i class="bi bi-check-circle-fill"></i> Multi-Agent Scan Complete</h5>
+                        <ul class="mb-2" style="font-size: 1.1rem; line-height: 1.8;">
+                            <li><strong>Detected:</strong> ${data.detected_item}</li>
+                            <li><strong>Waste Amount:</strong> <span class="badge bg-dark fs-5">${data.percentage}%</span></li>
+                            <li><strong>Nutrition Lost:</strong> <i class="bi bi-fire text-warning"></i> ${data.nutrition.kcal} kcal | <i class="bi bi-egg-fried text-info"></i> ${data.nutrition.protein}g Protein</li>
+                        </ul>
+                        
+                        <div class="bg-dark bg-opacity-25 p-3 rounded-3 small mt-2 mb-3">
+                            <strong><i class="bi bi-cpu"></i> System Reasoning:</strong> <br><em class="opacity-75">"${data.reasoning}"</em>
+                        </div>
+                    `;
+
+                    // Create the Ground Truth Feedback Form dynamically based on today's menu
+                    let teachHtml = `
+                        <div id="teachBox_${data.scan_id}" class="mt-3 border-top border-secondary pt-3">
+                            <div class="text-warning fw-bold mb-2 small"><i class="bi bi-database-check"></i> Supervised Learning: Enter Ground Truth %</div>
+                            <div class="d-flex flex-wrap gap-2 mb-2">
+                    `;
+
+                    // Inject Jinja variables directly into JS to build inputs for the active menu
+                    {% if menu %}
+                        {% for item in [menu[2], menu[3], menu[4]] %}
+                            {% if item != 'none' %}
+                                teachHtml += `
+                                <div class="input-group input-group-sm" style="width: 140px;">
+                                    <span class="input-group-text bg-dark text-white border-secondary" style="font-size:0.7rem;">{{ item | title }}</span>
+                                    <input type="number" class="form-control bg-dark text-white border-secondary teach-input-${data.scan_id}" data-item="{{ item }}" placeholder="%" min="0" max="100">
+                                </div>`;
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+
+                    teachHtml += `
+                            </div>
+                            <button onclick="teachAI(${data.scan_id}, '${base64Image}')" class="btn btn-sm btn-warning fw-bold w-100 shadow-sm"><i class="bi bi-cpu"></i> Train Model Weights</button>
+                        </div>
+                    `;
+
+                    aiResult.innerHTML += teachHtml;
+
+                } else {
+                    cancelAnimationFrame(scanAnimationId);
+                    ctx.clearRect(0, 0, hudCanvas.width, hudCanvas.height);
+                    aiResult.className = "alert mt-3 border-0 rounded-3 text-start bg-danger text-white shadow-lg";
+                    aiResult.innerHTML = `<i class="bi bi-exclamation-triangle-fill"></i> Error: ${data.message}`;
+                }
+            } catch(e) {
+                console.error(e);
+                cancelAnimationFrame(scanAnimationId);
+                ctx.clearRect(0, 0, hudCanvas.width, hudCanvas.height);
+                this.classList.replace('btn-secondary', 'btn-warning');
+                this.innerHTML = '<i class="bi bi-bullseye"></i> Network Error - Try Again';
+            }
+        });
+
+        // ACTIVE LEARNING GROUND TRUTH LOOP
+        async function teachAI(scanId, base64Img) {
+            const inputs = document.querySelectorAll(`.teach-input-${scanId}`);
+            let corrections = {};
+            let highestPct = 0;
+            let dominantItem = "Clean Plate";
+            let totalPct = 0;
+
+            // Loop through all inputs and grab the percentages the Chef typed
+            inputs.forEach(input => {
+                let val = parseInt(input.value) || 0;
+                if (val > 0) {
+                    corrections[input.dataset.item] = val;
+                    totalPct += val;
+                    if (val > highestPct) {
+                        highestPct = val;
+                        dominantItem = input.dataset.item; // AI learns the color of the most dominant item
+                    }
+                }
+            });
+
+            const btnBox = document.getElementById(`teachBox_${scanId}`);
+            btnBox.innerHTML = `<span class="text-warning fw-bold"><i class="bi bi-arrow-repeat spin"></i> Running Backpropagation...</span>`;
+            
+            await fetch('/api/teach_ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    scan_id: scanId, 
+                    corrections: corrections, 
+                    dominant_item: dominantItem,
+                    total_pct: Math.min(totalPct, 100),
+                    image: base64Img 
+                })
+            });
+            
+            btnBox.innerHTML = `<span class="badge bg-success fs-6"><i class="bi bi-check-circle-fill"></i> Ground Truth Saved! Database Updated.</span>`;
+        }
+    </script>
+</body>
+</html>

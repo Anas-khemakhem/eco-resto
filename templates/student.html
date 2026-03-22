@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Portal | Eco-Resto</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #f4f9f5; --text: #1e293b; --card: #ffffff; --border: #e2e8f0; --shadow: rgba(16, 185, 129, 0.2); }
+        [data-theme="dark"] { --bg: #0f172a; --text: #f8fafc; --card: #1e293b; --border: #334155; --shadow: rgba(0,0,0,0.5); }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg); color: var(--text); padding-bottom: 50px; transition: 0.3s;}
+        .app-header { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 35px 20px 50px; border-radius: 0 0 40px 40px; box-shadow: 0 10px 30px var(--shadow); }
+        .modern-card { background: var(--card); border: 1px solid var(--border); border-radius: 24px; box-shadow: 0 12px 35px var(--shadow); margin-top: -30px; position: relative; z-index: 10; padding: 30px; transition: 0.3s;}
+        .btn-massive { border-radius: 16px; padding: 16px; font-weight: 600; transition: 0.2s;}
+        .btn-massive:hover { transform: translateY(-3px); }
+        .menu-item { border: 1px solid var(--border); border-radius: 16px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;}
+        [dir="rtl"] { text-align: right; }
+        .feedback-btn { border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; transition: 0.2s; border: none; }
+        .feedback-btn:hover { transform: scale(1.1); }
+    </style>
+</head>
+<body>
+    <div class="d-flex justify-content-end p-3 gap-2 position-absolute w-100 z-3">
+        <select id="langSwitch" class="form-select form-select-sm fw-bold shadow-sm" style="width: auto; border-radius: 10px; background: rgba(255,255,255,0.9);"><option value="en">EN</option><option value="fr">FR</option><option value="ar">AR</option></select>
+        <button id="themeToggle" class="btn btn-light btn-sm rounded-circle shadow-sm" style="width:35px; height:35px;"><i class="bi bi-moon-stars"></i></button>
+    </div>
+
+    {% if not session.student_email %}
+    <div class="container d-flex flex-column justify-content-center align-items-center" style="min-height: 100vh;">
+        <div class="text-center mb-4 mt-5">
+            <div class="bg-success bg-opacity-10 rounded-circle d-inline-block p-4 mb-3" style="animation: float 4s infinite alternate;"><i class="bi bi-shield-lock text-success" style="font-size: 3.5rem;"></i></div>
+            <h2 class="fw-bold" data-i18n="login">University SSO</h2>
+        </div>
+        <div class="modern-card w-100" style="max-width: 400px; margin-top: 0;">
+            {% if login_error %}
+                <div class="alert alert-danger fw-bold rounded-3 text-center mb-4 shadow-sm" data-i18n="{{ login_error }}"><i class="bi bi-exclamation-triangle-fill"></i> Error</div>
+            {% endif %}
+
+            <form method="POST">
+                <input type="email" name="login_email" class="form-control form-control-lg bg-light border-0 mb-3" placeholder="student@fst.utm.tn" required style="border-radius: 12px;" data-i18n-ph="email">
+                <input type="password" name="login_pass" class="form-control form-control-lg bg-light border-0 mb-4" placeholder="••••••••" required style="border-radius: 12px;" data-i18n-ph="pass">
+                <button type="submit" class="btn btn-success w-100 btn-massive"><i class="bi bi-box-arrow-in-right"></i> <span data-i18n="logbtn">Secure Login</span></button>
+            </form>
+        </div>
+        <a href="/" class="text-muted mt-4 text-decoration-none fw-bold"><i class="bi bi-arrow-left"></i> <span data-i18n="back">Back to Home</span></a>
+    </div>
+    {% else %}
+    <div class="app-header d-flex justify-content-between align-items-start pt-5">
+        <div>
+            <h4 class="mb-0 fw-bold"><i class="bi bi-person-circle"></i> <span data-i18n="hello">Hello, Student</span></h4>
+            <small class="opacity-75 fw-bold">{{ session.student_email }}</small>
+        </div>
+        <form method="POST"><button type="submit" name="logout" value="1" class="btn btn-sm btn-light rounded-pill text-success fw-bold px-3 shadow-sm" data-i18n="logout">Logout</button></form>
+    </div>
+
+    <div class="container" style="max-width: 500px;">
+        <div class="modern-card mb-4">
+            {% if food_status == 'sold_out' %}
+                <div class="alert alert-danger rounded-4 fw-bold border-0 text-center py-4 mb-0">
+                    <i class="bi bi-exclamation-octagon-fill fs-1 d-block mb-2 text-danger" style="animation: pulse 2s infinite;"></i> <span data-i18n="soldout">SERVICE ENDED. All food served.</span>
+                </div>
+            {% else %}
+                <div class="alert alert-success rounded-4 fw-bold border-0 text-center mb-4 bg-success bg-opacity-10 text-success"><i class="bi bi-circle-fill" style="font-size: 0.6rem;"></i> <span data-i18n="open">Kitchen is Open</span></div>
+                
+                {% if message %} 
+                    <div class="alert alert-info border-0 rounded-3 fw-bold shadow-sm" data-i18n="{{ message }}"><i class="bi bi-check-circle-fill"></i> Success</div> 
+                {% endif %}
+                
+                <div class="text-center mb-4"><h4 class="fw-bold" data-i18n="rsvp">Meal Plan RSVP</h4></div>
+                <form method="POST">
+                    <button type="submit" name="attendance" value="yes" class="btn btn-success w-100 btn-massive mb-3 shadow-sm"><i class="bi bi-emoji-smile"></i> <span data-i18n="yes">I plan to eat today</span></button>
+                    <button type="submit" name="attendance" value="no" class="btn btn-outline-danger w-100 btn-massive border-2"><i class="bi bi-x-circle"></i> <span data-i18n="no">I will skip today</span></button>
+                </form>
+            {% endif %}
+        </div>
+
+        {% if menu %}
+        <h5 class="fw-bold px-2 mb-3 mt-4 text-warning"><i class="bi bi-egg-fried"></i> <span data-i18n="live">Today's Live Menu</span></h5>
+        <div class="modern-card p-3 mb-4" style="margin-top:0;">
+            {% for item_type, item_name in [('main_dish', menu[0]), ('protein', menu[1]), ('side_dish', menu[2]), ('fruit', menu[3]), ('yogurt', menu[4])] %}
+                {% if item_name != 'none' %}
+                <div class="menu-item flex-row">
+                    <div>
+                        <span class="text-muted small fw-bold text-uppercase d-block mb-1" data-i18n="{{ item_type }}">{{ item_type }}</span>
+                        <h5 class="mb-0 fw-bold text-capitalize text-primary" data-i18n="{{ item_name }}">{{ item_name }}</h5>
+                    </div>
+                    <form method="POST" class="d-flex gap-2 m-0">
+                        <input type="hidden" name="feedback_dish" value="{{ item_name }}">
+                        <button type="submit" name="rating" value="good" class="feedback-btn bg-success bg-opacity-10 text-success"><i class="bi bi-hand-thumbs-up-fill"></i></button>
+                        <button type="submit" name="rating" value="bad" class="feedback-btn bg-danger bg-opacity-10 text-danger"><i class="bi bi-hand-thumbs-down-fill"></i></button>
+                    </form>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <script>
+        const trans = {
+            en: { login: "University SSO", email: "Email", pass: "Password", logbtn: "Secure Login", back: "Back to Home", hello: "Hello, Student", logout: "Logout", open: "Kitchen is Open", rsvp: "Meal Plan RSVP", yes: "I plan to eat today", no: "I will skip today", live: "Today's Live Menu", soldout: "SERVICE ENDED. All food served.", rsvp_logged: "RSVP Logged. Thank you!", feedback_logged: "Feedback logged! Chef notified.", login_error_msg: "Only official @fst.utm.tn emails allowed!", main_dish: "Main Base", protein: "Protein", side_dish: "Side", fruit: "Fruit", yogurt: "Yogurt", couscous: "Couscous", spaghetti: "Spaghetti", rice: "Rice", mra9: "Mra9", meat: "Meat", escalope: "Escalope", fish: "Fish", salad: "Salad", "rice salad": "Rice Salad", fenouil: "Fenouil", Mashed_Carrot_Salad: "Mashed Carrot Salad", apple: "Apple", orange: "Orange", banana: "Banana", delice: "Delice", danone: "Danone", yup: "Yup" },
+            fr: { login: "Connexion U", email: "Email", pass: "Mot de passe", logbtn: "Connexion", back: "Retour", hello: "Bonjour", logout: "Déconnexion", open: "Cuisine Ouverte", rsvp: "Réservation Repas", yes: "Je mange aujourd'hui", no: "Je ne mange pas", live: "Menu du Jour", soldout: "SERVICE TERMINÉ.", rsvp_logged: "Réservé. Merci!", feedback_logged: "Avis envoyé au chef!", login_error_msg: "Seuls les emails @fst.utm.tn sont autorisés!", main_dish: "Base", protein: "Protéine", side_dish: "Accompagnement", fruit: "Fruit", yogurt: "Yaourt", couscous: "Couscous", spaghetti: "Spaghetti", rice: "Riz", mra9: "Mra9", meat: "Viande", escalope: "Escalope", fish: "Poisson", salad: "Salade", "rice salad": "Salade de Riz", fenouil: "Fenouil", Mashed_Carrot_Salad: "Purée de carottes épicée", apple: "Pomme", orange: "Orange", banana: "Banane", delice: "Délice", danone: "Danone", yup: "Yup" },
+            ar: { login: "تسجيل الدخول", email: "البريد الإلكتروني", pass: "كلمة المرور", logbtn: "دخول آمن", back: "العودة للرئيسية", hello: "أهلاً بك", logout: "خروج", open: "المطبخ مفتوح", rsvp: "تأكيد الحضور", yes: "سآكل اليوم", no: "لن آكل اليوم", live: "قائمة اليوم", soldout: "انتهت الخدمة.", rsvp_logged: "تم التسجيل. شكراً!", feedback_logged: "تم إرسال التقييم للشيف!", login_error_msg: "عذراً، يسمح فقط بإيميل الجامعة @fst.utm.tn!", main_dish: "الطبق الرئيسي", protein: "بروتين", side_dish: "طبق جانبي", fruit: "فاكهة", yogurt: "زبادي", couscous: "كسكسي", spaghetti: "سباغيتي", rice: "أرز", mra9: "مرق", meat: "لحم", escalope: "إسكالوب", fish: "سمك", salad: "سلطة", "rice salad": "سلطة أرز", fenouil: "بسباس", Mashed_Carrot_Salad: "ترشي", apple: "تفاح", orange: "برتقال", banana: "موز", delice: "ديليس", danone: "دانون", yup: "يوب" }
+        };
+
+        const themeBtn = document.getElementById('themeToggle');
+        if(localStorage.getItem('theme') === 'dark') { document.documentElement.setAttribute('data-theme', 'dark'); themeBtn.innerHTML = '<i class="bi bi-sun"></i>'; }
+        themeBtn.addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+            localStorage.setItem('theme', isDark ? 'light' : 'dark');
+            themeBtn.innerHTML = isDark ? '<i class="bi bi-moon-stars"></i>' : '<i class="bi bi-sun"></i>';
+        });
+
+        const langSelect = document.getElementById('langSwitch');
+        if(localStorage.getItem('lang')) { langSelect.value = localStorage.getItem('lang'); }
+        applyLang(langSelect.value);
+
+        langSelect.addEventListener('change', (e) => { localStorage.setItem('lang', e.target.value); applyLang(e.target.value); });
+
+        function applyLang(l) {
+            document.documentElement.setAttribute('dir', l==='ar'?'rtl':'ltr');
+            document.querySelectorAll('[data-i18n]').forEach(el => { 
+                const key = el.getAttribute('data-i18n');
+                let textValue = trans[l][key]; 
+                if (!textValue) {
+                    for (const [k, v] of Object.entries(trans[l])) {
+                        if (k.toLowerCase() === key.toLowerCase()) textValue = v;
+                    }
+                }
+                if(textValue) el.innerHTML = textValue; 
+            });
+            document.querySelectorAll('[data-i18n-ph]').forEach(el => { if(trans[l][el.getAttribute('data-i18n-ph')]) el.placeholder = trans[l][el.getAttribute('data-i18n-ph')]; });
+        }
+    </script>
+</body>
+</html>
