@@ -5,9 +5,20 @@
 ![YOLOv8](https://img.shields.io/badge/YOLOv8-Instance_Segmentation-yellow?style=for-the-badge)
 ![Scikit-Learn](https://img.shields.io/badge/Machine_Learning-Scikit--Learn-orange?style=for-the-badge&logo=scikit-learn)
 
-**Predicting demand, tracking waste, and saving the planet—one tray at a time.**
+**Eco-Resto — Multi-Agent AI System for Food Waste Optimization.**
 
 ---
+## 🧠 Overview
+
+Eco-Resto is a **multi-agent AI system** designed to reduce food waste in university canteens.
+
+The system combines **machine learning, computer vision, and intelligent agents** to:
+- Predict student attendance
+- Estimate food waste
+- Optimize meal production
+- Suggest redistribution strategies
+
+This project was initially developed during a **24-hour hackathon**, and later extended into a more structured and modular system.
 
 ## 🚨 The Problem
 University cafeterias operate blindly. They cook based on static estimates, leading to massive overproduction. 
@@ -42,14 +53,18 @@ Eco-Resto does not rely on a single, fragile model. We built a **Multi-Agent AI 
     *   *Role:* Monitors live RSVPs vs. Cooked Food. If a surplus > 15kg is detected, it autonomously triggers an alert to the local Food Bank for pickup.
 
 ---
+## 📊 Architecture Diagram
 
+![Architecture](docs/architecture.png)
+
+---
 ## ⚙️ Installation & Deployment
 
 Deploying the local edge-server:
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/your-username/eco-resto.git
+git clone https://github.com/Anas-khemakhem/eco-resto
 cd eco-resto
 
 # 2. Install AI and Web dependencies
@@ -67,3 +82,13 @@ Eco-Resto is built to directly tackle the UN's SDGs:
 *   🎯 **SDG 2 (Zero Hunger):** Redirecting clean surplus food to NGOs.
 *   🎯 **SDG 12 (Responsible Consumption):** Optimizing supply chains to prevent waste at the source.
 *   🎯 **SDG 13 (Climate Action):** Quantifying and reducing Methane emissions from organic waste.
+---
+
+## 👥 Contributors
+
+This project was developed as a team during a 24-hour hackathon.
+
+- Anas Khemakhem  
+- Mohamed Ben Haj 
+- Aziz Amouri 
+- Rihem Mnif
